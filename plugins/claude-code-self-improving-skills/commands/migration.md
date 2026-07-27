@@ -9,7 +9,7 @@ description: 플러그인/마켓플레이스 리네임(samton-plugins 개편)으
 ## 1. Dry-run으로 orphan 목록 확인
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/migrate_local.py
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/migrate_local.py"
 ```
 
 출력을 사용자에게 그대로 보여 주세요. 대상: `~/.claude/settings.json`(permissions.allow
@@ -30,7 +30,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/migrate_local.py
 변경 목록이 있으면 사용자에게 적용 여부를 확인받고:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/migrate_local.py --apply
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/migrate_local.py" --apply
 ```
 
 각 파일은 적용 직전 `<파일>.bak-migration-<타임스탬프>` 로 백업됩니다. 재실행은

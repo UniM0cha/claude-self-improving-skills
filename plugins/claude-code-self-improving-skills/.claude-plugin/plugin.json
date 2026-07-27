@@ -1,6 +1,6 @@
 {
   "name": "claude-code-self-improving-skills",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "복잡한 작업 후 재사용 가능한 기법을 SKILL.md로 자동 증류하고 기존 스킬을 스스로 개선하는 자기개선 루프 (Nous Research Hermes Agent 방식의 Claude Code 이식)",
   "author": {
     "name": "이정윤",

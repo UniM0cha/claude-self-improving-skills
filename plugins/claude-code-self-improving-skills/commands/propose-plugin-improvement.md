@@ -25,7 +25,7 @@ printenv SIS_PLUGIN_PR
 개선을 한두 단어로 요약한 slug로:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/propose_plugin_pr.py prepare <slug>
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/propose_plugin_pr.py" prepare <slug>
 ```
 
 출력 JSON의 `dir`(작업 디렉토리)와 `mode`(`direct`=write 권한 / `fork`=fork 경유)를 확인하세요. gh 인증이 없으면 여기서 명확한 에러로 멈춥니다.
@@ -57,7 +57,7 @@ python3 -m json.tool <수정한 .json> >/dev/null
 PR 본문을 **clone 밖** 임시 파일(예: `mktemp`)에 작성하세요 — **변경 요약과 근거만**, transcript 금지. 그 다음:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/propose_plugin_pr.py submit "<dir>" "<PR 제목>" "<body 파일 경로>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/propose_plugin_pr.py" submit "<dir>" "<PR 제목>" "<body 파일 경로>"
 ```
 
 `submit`은 화이트리스트 경로(`plugins/claude-code-self-improving-skills/`, `.claude-plugin/marketplace.json`)만 스테이징해 커밋·push하고 upstream으로 PR을 연 뒤, 출력으로 **PR URL**을 줍니다. 그 URL을 사용자에게 보고하세요.

@@ -9,7 +9,7 @@ description: N일 이상 미사용된 학습 스킬을 일괄 아카이브한다
 ### 1. 미리보기 (먼저 반드시 실행 — 아무것도 바꾸지 않음)
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py prune <days>
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" prune <days>
 ```
 
 후보 목록(이름 + 미사용 일수 + use_count)을 사용자에게 표로 보여주세요. 대상은 **pin 안 됨 + `created_by:agent` + 아직 active/stale** 인 스킬만입니다 (사용자 작성·pin 스킬은 제외). use_count가 높은 후보는 "드물지만 결정적으로 쓰이는" 스킬일 수 있으니 사용자에게 짚어주세요.
@@ -19,7 +19,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py prune <days>
 후보가 맞다면, 사용자에게 확인을 받은 뒤 실제 아카이브:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py prune <days> --apply
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" prune <days> --apply
 ```
 
 `--apply` 는 변경 전 tar.gz 스냅샷을 뜨고, 후보들을 `~/.claude/skills/.archive/` 로 이동(삭제 아님)합니다. 개별 복구는 `/restore-skill`, 이번 정리 전체를 되돌리려면 `/curator-rollback` (스냅샷 + usage 메타 복원) 을 쓰세요.

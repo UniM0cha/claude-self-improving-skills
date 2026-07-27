@@ -18,7 +18,7 @@ description: 학습된 스킬 라이브러리(~/.claude/skills)를 정리한다 
 ls -d ~/.claude/skills/*/ 2>/dev/null
 grep -rl "provenance: self-improving-skills" ~/.claude/skills --include=SKILL.md 2>/dev/null
 echo "=== usage telemetry ==="
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/usage_store.py dump 2>/dev/null
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/usage_store.py" dump 2>/dev/null
 ```
 
 각 학습 스킬의 `name`·`description`과 usage 통계(use/view/patch, 마지막 사용, state, created_by)를 표로 만드세요.
@@ -26,7 +26,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/usage_store.py dump 2>/dev/null
 데이터 수집이 끝나면 **검토를 시작하는 이 시점에** 큐레이션 시각을 기록하세요 — 패스가 중간에 중단되거나 "변경 없음"으로 끝나도 기록이 남아, SessionStart 큐레이터가 매 세션 재트리거(nag)하지 않습니다:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py mark-curated
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" mark-curated
 ```
 
 ### 2. Hard rules — 위반 금지
@@ -48,7 +48,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py mark-curated
 4. 흡수 아카이브는 반드시 umbrella 이름을 함께 기록하세요 (`absorbed_into` — 폐기가 아니라 통합이었음이 남습니다):
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py archive "<흡수된-스킬>" "<umbrella-스킬>"
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" archive "<흡수된-스킬>" "<umbrella-스킬>"
    ```
 
    명령이 `ok: false`를 반환하면 그대로 따르세요: `umbrella not found`면 **umbrella 스킬을 먼저 만들거나 patch한 뒤 재시도**하고, pinned·user 거부는 정상 보호 동작입니다(`--force`는 사람이 직접 결정할 때만).

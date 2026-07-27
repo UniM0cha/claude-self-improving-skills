@@ -8,18 +8,18 @@ description: 학습 스킬 하나를 수동으로 아카이브한다 (선택적�
 
 **미리보기:**
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py archive "<name>" --dry-run
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" archive "<name>" --dry-run
 ```
 
 **적용:**
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py archive "<name>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" archive "<name>"
 ```
 
 이 스킬의 내용이 다른 umbrella 스킬로 **병합되어** 아카이브하는 경우, 그 umbrella 이름을 함께 기록하면 (폐기가 아니라 통합이었음이 리포트에 남습니다):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py archive "<name>" "<umbrella-skill-name>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_transitions.py" archive "<name>" "<umbrella-skill-name>"
 ```
 
 명령이 `ok: false`를 반환하면 그대로 따르세요: `umbrella not found`면 umbrella 스킬을 먼저 만들거나 patch한 뒤 재시도하고, pinned·user 스킬 거부는 정상 보호 동작입니다 (`--force`는 사용자가 명시적으로 원할 때만).

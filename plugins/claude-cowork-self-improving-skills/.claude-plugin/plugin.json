@@ -1,6 +1,6 @@
 {
   "name": "claude-cowork-self-improving-skills",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cowork(클라우드 컨테이너) 전용 자기개선 루프 — 증류된 스킬을 SendUserFile→'스킬 저장'으로 claude.ai에 영속화하고, 콜드 컨테이너의 SessionStart×플러그인 동기화 race를 UserPromptSubmit 안내로 회피 (claude-code-self-improving-skills의 Cowork 변형)",
   "author": {
     "name": "이정윤",

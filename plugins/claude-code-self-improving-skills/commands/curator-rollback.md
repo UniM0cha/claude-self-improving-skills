@@ -7,13 +7,13 @@ description: 큐레이터 변경 전 스냅샷으로 학습 스킬 라이브러�
 먼저 스냅샷 목록을 보여주세요 (오래된 것부터):
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_backup.py list
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_backup.py" list
 ```
 
 `$ARGUMENTS` 로 스탬프(예: `20260713T090000Z`)가 주어졌으면 그것을, 아니면 사용자에게 어느 시점으로 되돌릴지 확인하세요. **되돌리기 전에 반드시 사용자 확인을 받으세요** — 스냅샷 이후에 새로 생긴 스킬·수정은 라이브러리에서 사라집니다(단, 아래 언두 스냅샷으로 복구 가능).
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/curator_backup.py rollback [<stamp>]
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/curator_backup.py" rollback [<stamp>]
 ```
 
 이 명령의 동작 (Hermes curator_backup 이식):

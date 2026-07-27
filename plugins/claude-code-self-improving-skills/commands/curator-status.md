@@ -10,7 +10,7 @@ description: 자기개선 루프 상태를 조회한다 — 학습 스킬별 사
 echo "=== 큐레이터 상태 ==="
 cat ~/.claude/self-improve/curator_state.json 2>/dev/null || echo "(아직 큐레이션 실행 안 됨)"
 echo; echo "=== 스킬별 usage telemetry ==="
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/usage_store.py dump 2>/dev/null || echo "(telemetry 없음)"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/usage_store.py" dump 2>/dev/null || echo "(telemetry 없음)"
 echo; echo "=== 아카이브된 스킬 ==="
 ls -1 ~/.claude/skills/.archive/ 2>/dev/null || echo "(없음)"
 ```

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-advisory.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-advisory.sh\"",
             "timeout": 10
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/distill-nudge.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/distill-nudge.sh\"",
             "timeout": 15
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/backup-skill.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/backup-skill.sh\"",
             "timeout": 10
           }
         ]
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/validate-skill.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/validate-skill.sh\"",
             "timeout": 10
           }
         ]

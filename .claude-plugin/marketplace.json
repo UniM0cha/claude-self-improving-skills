@@ -11,7 +11,7 @@
       "name": "claude-code-self-improving-skills",
       "source": "./plugins/claude-code-self-improving-skills",
       "description": "Hermes Agent-style self-improvement for Claude Code: automatically distill complex work into SKILL.md and improve skills over time.",
-      "version": "0.13.1",
+      "version": "0.13.2",
       "author": {
         "name": "이정윤"
       },
@@ -22,7 +22,7 @@
       "name": "claude-cowork-self-improving-skills",
       "source": "./plugins/claude-cowork-self-improving-skills",
       "description": "Cowork (cloud container) variant of claude-code-self-improving-skills: persists distilled skills to claude.ai via SendUserFile → '스킬 저장', and avoids the cold-container SessionStart × plugin-sync race.",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "author": {
         "name": "이정윤"
       },
