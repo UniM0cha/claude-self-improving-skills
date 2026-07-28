@@ -28,8 +28,8 @@ def test_modern_marketplace_points_to_the_codex_plugin():
         if plugin["name"] == PLUGIN_NAME
     ]
 
-    assert marketplace["name"] == "samton-plugins"
-    assert marketplace["interface"]["displayName"] == "Samton Plugins"
+    assert marketplace["name"] == "self-improving-skills"
+    assert marketplace["interface"]["displayName"] == "Self-Improving Skills"
     assert len(matches) == 1
 
     entry = matches[0]

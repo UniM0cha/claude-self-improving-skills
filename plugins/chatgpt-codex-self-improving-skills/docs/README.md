@@ -43,15 +43,15 @@ This plugin implements a Hermes-inspired learning loop for Codex:
 Add the repository's Codex marketplace and install the plugin:
 
 ```bash
-codex plugin marketplace add samton-inc/samton-plugins
-codex plugin add chatgpt-codex-self-improving-skills@samton-plugins
+codex plugin marketplace add UniM0cha/self-improving-skills
+codex plugin add chatgpt-codex-self-improving-skills@self-improving-skills
 ```
 
 For an existing installation, refresh the marketplace and reinstall the plugin:
 
 ```bash
-codex plugin marketplace upgrade samton-plugins
-codex plugin add chatgpt-codex-self-improving-skills@samton-plugins
+codex plugin marketplace upgrade self-improving-skills
+codex plugin add chatgpt-codex-self-improving-skills@self-improving-skills
 ```
 
 After installing or upgrading, CLI users should start a new Codex task. Desktop
@@ -186,8 +186,8 @@ source checkout, pass the installed marketplace's canonical data directory
 explicitly:
 
 ```bash
-python3 scripts/skill_manager_cli.py migrate-data --source ~/.self-improving-skills --target ~/.codex/plugins/data/chatgpt-codex-self-improving-skills-samton-plugins
-python3 scripts/skill_manager_cli.py migrate-data --source ~/.self-improving-skills --target ~/.codex/plugins/data/chatgpt-codex-self-improving-skills-samton-plugins --apply
+python3 scripts/skill_manager_cli.py migrate-data --source ~/.self-improving-skills --target ~/.codex/plugins/data/chatgpt-codex-self-improving-skills-self-improving-skills
+python3 scripts/skill_manager_cli.py migrate-data --source ~/.self-improving-skills --target ~/.codex/plugins/data/chatgpt-codex-self-improving-skills-self-improving-skills --apply
 ```
 
 These examples assume the default Codex home (`~/.codex`). If Codex uses a
