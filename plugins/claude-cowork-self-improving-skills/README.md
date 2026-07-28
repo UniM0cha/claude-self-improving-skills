@@ -39,13 +39,24 @@ SendUserFile 로 SKILL.md 를 사용자에게 전송
 | 구성 요소 | 파일 | 역할 |
 |---|---|---|
 | **UserPromptSubmit 훅** | `hooks/session-advisory.sh` → `scripts/session_advisory.py` | 세션 첫 프롬프트에서 루프 안내 1회 주입 (SessionStart 대체 — race 회피). 플래그: `~/.claude/self-improve/advisory_shown` |
-| **Stop 훅** | `hooks/distill-nudge.sh` → `scripts/analyze_turn.py` | 임계 초과 미증류 구간에서 종료 1회 block + 증류·**저장 유도**. 안내 유실 시 fallback advisory 를 여기서 대신 주입 |
-| **PreToolUse 훅** | `hooks/backup-skill.sh` → `scripts/backup_skill.py` | 학습 SKILL.md 편집 직전 백업 (구조 깨짐 시 롤백용) |
-| **PostToolUse 훅** | `hooks/validate-skill.sh` → `scripts/validate_skill.py` | frontmatter·크기 검증, 깨지면 자동 롤백, provenance 스탬프, **claude.ai 예약어(`claude`/`anthropic`) 이름 경고** |
+| **Stop 훅** | `hooks/distill-nudge-cowork.sh` → `scripts/analyze_turn.py` | 임계 초과 미증류 구간에서 종료 1회 block + 증류·**저장 유도**. 안내 유실 시 fallback advisory 를 여기서 대신 주입 |
+| **PreToolUse 훅** | `hooks/backup-skill-cowork.sh` → `scripts/backup_skill.py` | 학습 SKILL.md 편집 직전 백업 (구조 깨짐 시 롤백용) |
+| **PostToolUse 훅** | `hooks/validate-skill-cowork.sh` → `scripts/validate_skill.py` | frontmatter·크기 검증, 깨지면 자동 롤백, provenance 스탬프, **claude.ai 예약어(`claude`/`anthropic`) 이름 경고** |
 | **skill-distiller 에이전트** | `agents/skill-distiller.md` | 증류 판단·작성. Cowork판: 예약어 금지 네이밍 + 보고에 "SendUserFile 로 보내 저장 안내" 지시 포함 |
 | **/distill-skill** | `skills/distill-skill/` | 수동 증류 트리거 + 저장 안내까지 |
 | **/save-skill** (신규) | `skills/save-skill/` | 미저장 학습 스킬 자동 감지(manifest 대조) → SendUserFile → '스킬 저장' 안내. 예약어 사전 점검·rename 포함 |
 | **/loop-status** (신규) | `skills/loop-status/` | 학습 스킬 × 저장 여부 × 이번 세션 telemetry 요약 |
+
+## 원본과 함께 설치돼도 충돌하지 않는 이유
+
+원본(`claude-code-self-improving-skills`)과 이 플러그인은 같은 훅 이벤트를 씁니다. 한 세션에서 둘 다 닿을 수 있는 상황 — 로컬에 원본을 설치해두고 이 플러그인을 claude.ai 계정에 등록한 경우가 대표적입니다. 계정 등록분은 로컬 Claude Code 세션에도 동기화되어 내려옵니다 — 이 두 장치가 한쪽만 동작하도록 보장합니다.
+
+1. **훅 스크립트 이름 분리 (`-cowork` 접미사)**. `${CLAUDE_PLUGIN_ROOT}` 는 **실행 시점에야** 치환되므로, 이름이 같으면 두 플러그인의 등록 문자열이 완전히 일치합니다. 그러면 한쪽만 등록되고 다른 쪽 훅은 조용히 사라집니다 — 실제로 이 증상을 겪고 도입한 규칙입니다. 원본과 겹치는 이름을 새로 만들지 마세요(CI 가 검사합니다).
+2. **런타임 게이트 (`scripts/runtime_env.py`)**. 각 훅은 자기 환경이 아니면 즉시 통과합니다. 판별 신호는 하나입니다: **HOME 이 `local-agent-mode-sessions` 경로 세그먼트 아래**면 Cowork, 아니면 로컬.
+
+   초기 구현은 `~/.claude/plugins/installed_plugins.json` 부재도 Cowork 신호로 썼다가 제거했습니다. 계정에서 동기화된 플러그인은 그 파일에 기록되지 않으므로, 계정 등록분만 쓰는 사용자는 멀쩡한 로컬 머신에 그 파일이 없고 — 그러면 원본 변형이 조용히 물러나 증류 루프가 통째로 죽습니다. 대가로 샌드박스 경로 밖의 Cowork 컨테이너는 로컬로 읽히므로, 그런 환경에서는 `SIS_RUNTIME` 을 고정하세요.
+
+`SIS_RUNTIME=local|cowork` 로 강제 지정할 수 있습니다. CI 가 두 플러그인의 `runtime_env.py` 동일성과 훅 이름 충돌을 모두 검사합니다.
 
 ## 원본과의 차이 요약
 
@@ -66,6 +77,7 @@ Cowork(claude.ai)의 플러그인 설치 흐름 또는 이 마켓플레이스를
 | `SIS_MIN_FILE_EDITS` | 2 | nudge에 필요한 실제 파일 편집 수 |
 | `SIS_DISTILL_READONLY_THRESHOLD` | 24 | 편집 0회(조사·디버깅) 구간의 nudge 임계 |
 | `SIS_DISTILLER_MODEL` | (없음) | distiller 서브에이전트 모델 라우팅 opt-in (`haiku` 금지) |
+| `SIS_RUNTIME` | (자동 판별) | `cowork` 이면 이 플러그인이 동작, `local` 이면 모든 훅이 조용히 통과 |
 
 ## 테스트
 

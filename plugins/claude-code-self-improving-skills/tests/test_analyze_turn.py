@@ -98,12 +98,14 @@ def test_background_mode_falls_back_when_the_cli_cannot_actually_run(
     assert _queue(sandbox).list_jobs() == []
 
 
-def test_the_daily_cap_stops_runaway_spawning(run_analyzer, sandbox, tmp_path):
-    env = dict(_usable_claude(tmp_path), SIS_DISTILL_MAX_JOBS_PER_DAY="1")
+def test_consecutive_segments_each_get_their_own_job(run_analyzer, sandbox, tmp_path):
+    """A daily spawn cap used to stop the second one here. It counted attempts
+    rather than successes, so a day of failures silently refused healthy work;
+    removed in v0.17.0. Per-job budget and the triggers are the ceilings now."""
+    env = _usable_claude(tmp_path)
     run_analyzer(_work_rows(), "a", extra={"prompt_id": "p1"}, env=env)
-    r = run_analyzer(_work_rows(), "b", extra={"prompt_id": "p2"}, env=env)
-    assert r["decision"] == "block"  # fell back rather than queueing a second
-    assert len(_queue(sandbox).list_jobs()) == 1
+    run_analyzer(_work_rows(), "b", extra={"prompt_id": "p2"}, env=env)
+    assert len(_queue(sandbox).list_jobs()) == 2
 
 
 def test_off_mode_neither_queues_nor_nudges(run_analyzer, sandbox):

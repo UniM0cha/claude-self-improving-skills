@@ -17,6 +17,9 @@ import os
 import shutil
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runtime_env
+
 BACKUP_DIR = os.path.expanduser("~/.claude/self-improve/skill_backups")
 
 
@@ -32,6 +35,11 @@ def _backup_path(file_path):
 
 
 def main():
+    # The claude-code variant backs the same file up on a local machine, into
+    # the same directory. Running both would just write the copy twice.
+    if runtime_env.is_local_runtime():
+        sys.exit(0)
+
     try:
         payload = json.loads(sys.stdin.read() or "{}")
     except Exception:

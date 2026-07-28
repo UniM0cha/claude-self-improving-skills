@@ -43,6 +43,14 @@ def sandbox(tmp_path, monkeypatch):
     """Sandboxed HOME + freshly-reloaded modules bound to it."""
     for key, value in _sandbox_home_env(tmp_path).items():
         monkeypatch.setenv(key, value)
+    # Pin the runtime these tests describe. Every hook here now stands down in
+    # Cowork, so the contracts below only mean anything in a local runtime.
+    # A tmp_path home already detects as local, but pinning keeps these tests
+    # describing one runtime on purpose rather than by accident of where pytest
+    # put its temp dir. runtime_env's own detection is tested in
+    # test_runtime_env.py, which clears this. Set via monkeypatch so the
+    # subprocess runs inherit it through os.environ.
+    monkeypatch.setenv("SIS_RUNTIME", "local")
     import curator_backup
     import curator_transitions
     import usage_store

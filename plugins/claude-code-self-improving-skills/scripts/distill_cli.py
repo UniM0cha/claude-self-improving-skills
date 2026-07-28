@@ -19,6 +19,7 @@ import os
 from typing import Any, Dict, List
 
 import sis_io
+import skill_guard
 from distill_queue import DistillQueue, default_queue_path
 import distill_worker
 
@@ -38,16 +39,19 @@ REMEDIES = {
         "your organization disables bypassPermissions; background distillation "
         "cannot write skills. Set SIS_REVIEW_MODE=foreground to keep the nudge."
     ),
+    # Kept only to explain jobs blocked by the old rule; nothing produces it now.
     "symlinked_skills": (
-        "a skill under ~/.claude/skills is a symlink; writes through it land "
-        "outside the snapshotted tree and could not be rolled back. Replace the "
-        "link with a real directory, or keep SIS_REVIEW_MODE=foreground."
+        "blocked by a rule that no longer exists — a symlinked skill used to "
+        "refuse the whole run. `retry --all-blocked` picks these up."
     ),
     "unprotected_write": (
         "the guard saw a change it could not guarantee a rollback for — inspect "
         "the paths below before retrying"
     ),
-    "budget_exhausted": "raise SIS_DISTILL_MAX_USD, then `retry --all-blocked`",
+    "budget_exhausted": (
+        "a spend ceiling stopped the child. This plugin no longer sets one — "
+        "check the CLI's own config, then `retry --all-blocked`"
+    ),
     "invalid_schema": "plugin bug: the result schema was rejected by the CLI",
 }
 
@@ -79,6 +83,18 @@ def cmd_status(args: argparse.Namespace) -> int:
             entry["unprotected"] = result["unprotected"]
         problems.append(entry)
 
+    # The tree as it stands. A write through one of these links is neither
+    # reverted nor reported as a violation, so this is the only place the user
+    # can see which paths the guard does not cover, and scanning at call time
+    # keeps the answer true when links are added or removed between runs.
+    #
+    # A detection failure is reported as itself: swallowing it into an empty
+    # list would print "no uncovered paths" when the truth is "could not tell".
+    try:
+        symlinked: Any = skill_guard.symlinked_entries()
+    except OSError as exc:
+        symlinked = {"error": "could not scan the skill tree: {0}".format(exc)}
+
     _print(
         {
             "mode": (os.environ.get("SIS_REVIEW_MODE") or "background"),
@@ -87,6 +103,7 @@ def cmd_status(args: argparse.Namespace) -> int:
             "claude_binary": claude_bin or "NOT FOUND",
             "worker_running": queue.worker_alive(),
             "blocked": problems,
+            "symlinked": symlinked,
             "last_failure": status["last_failure"],
         }
     )

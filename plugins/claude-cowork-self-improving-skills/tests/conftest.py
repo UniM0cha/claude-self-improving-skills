@@ -26,6 +26,13 @@ sys.path.insert(0, SCRIPTS_DIR)
 def sandbox(tmp_path, monkeypatch):
     """Sandboxed HOME + freshly-reloaded modules bound to it."""
     monkeypatch.setenv("HOME", str(tmp_path))
+    # Pin the runtime these tests describe. Every hook here now stands down
+    # outside Cowork, and a tmp_path home detects as LOCAL (it is nowhere near
+    # a local-agent-mode-sessions path), so without this pin every hook contract
+    # below would assert against a hook that returned early. runtime_env's own
+    # detection is tested in test_runtime_env.py, which clears this. Set via
+    # monkeypatch so the subprocess runs inherit it through os.environ.
+    monkeypatch.setenv("SIS_RUNTIME", "cowork")
     import usage_store
     importlib.reload(usage_store)
 

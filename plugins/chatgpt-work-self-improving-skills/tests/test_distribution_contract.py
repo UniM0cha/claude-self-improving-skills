@@ -71,8 +71,8 @@ def test_repo_marketplace_exposes_one_work_entry_without_product_gating():
         if plugin["name"] == PLUGIN_NAME
     ]
 
-    assert marketplace["name"] == "self-improving-skills"
-    assert marketplace["interface"]["displayName"] == "Self-Improving Skills"
+    assert marketplace["name"] == "samton-plugins"
+    assert marketplace["interface"]["displayName"] == "Samton Plugins"
     assert len(matches) == 1
     entry = matches[0]
     assert entry["name"] == manifest["name"] == PLUGIN_ROOT.name

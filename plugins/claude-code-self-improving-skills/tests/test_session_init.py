@@ -116,3 +116,56 @@ def test_off_mode_injects_nothing(sandbox):
 def test_background_mode_tells_the_agent_it_has_nothing_to_do(sandbox):
     context = _init(sandbox)["additionalContext"]
     assert "백그라운드 모드" in context
+
+
+# --- background curation ----------------------------------------------------
+
+def _curate(sandbox, monkeypatch, env=None, claude="/fake/claude"):
+    """Drive session_init._enqueue_curation against the sandbox; return its lines."""
+    import distill_queue
+    import distill_worker
+    import session_init
+    importlib.reload(distill_queue)
+    importlib.reload(distill_worker)
+    importlib.reload(session_init)
+    monkeypatch.setenv("SIS_STATE_DIR", str(sandbox.home / ".claude" / "self-improve"))
+    monkeypatch.setenv("SIS_TEST_NO_LAUNCH", "1")
+    for key, value in (env or {}).items():
+        monkeypatch.setenv(key, value)
+    # Pin CLI discovery so the test doesn't depend on whether the machine
+    # running it happens to have `claude` installed.
+    monkeypatch.setattr(distill_worker, "discover_claude", lambda *a, **k: claude)
+    lines = []
+    session_init._enqueue_curation(lines)
+    return lines
+
+
+def test_the_consolidation_pass_is_queued_as_a_background_job(sandbox, monkeypatch):
+    lines = _curate(sandbox, monkeypatch)
+    jobs = _queue(sandbox).list_jobs()
+    assert len(jobs) == 1
+    assert jobs[0]["trigger"] == "curate"
+    # It reads the skill library itself, so it carries no transcript.
+    assert jobs[0]["transcript_path"] == ""
+    assert any("백그라운드" in line for line in lines)
+
+
+def test_curation_can_be_turned_off(sandbox, monkeypatch):
+    lines = _curate(sandbox, monkeypatch, {"SIS_AUTO_CURATE": "0"})
+    assert _queue(sandbox).list_jobs() == []
+    # Turning the automation off must still leave the manual route visible.
+    assert any("/curate-skills" in line for line in lines)
+
+
+def test_two_session_starts_on_one_day_queue_a_single_pass(sandbox, monkeypatch):
+    """Parallel session starts must not race several children over the same
+    skill tree — the (session_id, prompt_id) key collapses them into one job."""
+    _curate(sandbox, monkeypatch)
+    _curate(sandbox, monkeypatch)
+    assert len(_queue(sandbox).list_jobs()) == 1
+
+
+def test_without_a_claude_binary_it_falls_back_to_the_manual_pointer(sandbox, monkeypatch):
+    lines = _curate(sandbox, monkeypatch, claude=None)
+    assert _queue(sandbox).list_jobs() == []
+    assert any("/curate-skills" in line for line in lines)

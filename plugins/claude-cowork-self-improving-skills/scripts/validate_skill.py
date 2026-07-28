@@ -39,6 +39,8 @@ import sys
 from typing import NoReturn
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runtime_env
+
 try:
     import usage_store
 except Exception:
@@ -305,6 +307,12 @@ def _record_patch(file_path, text, payload):
 
 
 def main():
+    # This validator also warns about names claude.ai's "스킬 저장" rejects,
+    # which is advice a local session has no use for — there the claude-code
+    # validator runs instead.
+    if runtime_env.is_local_runtime():
+        silent()
+
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}

@@ -4,23 +4,23 @@
 The background worker launches `claude -p` with `--permission-mode
 bypassPermissions`, because `~/.claude` is a protected path and no other mode
 can write there unattended. That mode turns off every built-in check, and the
-distiller's input — a session transcript — is untrusted. Three layers stand
-between that and the user's skill library; this module is the last one:
+distiller's input — a session transcript — is untrusted.
 
-  1. the child gets a reduced tool set (no Bash) and a deny list, and
-  2. the plugin's own PreToolUse/PostToolUse hooks *may* load in the child, but
-     whether `--plugin-dir` carries hooks as well as agents is not something we
-     can guarantee across CLI versions, so
-  3. the worker snapshots the skill tree before the run and re-checks it after.
+This module is the only enforcement left in the worker; the permission fencing
+that used to stand in front of it is gone. The README's security section is the
+canonical account of that change and what it costs.
 
-Everything here is plain Python running in the worker process, so it holds no
-matter what the child session did or which hooks it loaded.
+What this module is, precisely: detection and rollback, not prevention. A bad
+write happens first and is undone after, and only inside the skill tree. That
+tree is fully snapshotted, so a write there is always caught. Outside it,
+nothing stops a write and it is detected only if it lands on a bounded
+watchlist of high-value files — a full-filesystem snapshot is not feasible.
 
-Scope, stated honestly: the skill tree is fully snapshotted, so a bad write
-there is always caught and reverted. Writes *outside* it can only be detected
-for a bounded watchlist of high-value files — a full-filesystem snapshot is not
-feasible. The deny list is what prevents those writes; the watchlist is how we
-notice if it ever fails to.
+Symlinked entries are the one gap inside the tree. Following a link would pull
+arbitrary files into the snapshot or loop, so the walk stops there and a write
+through one is neither reverted nor flagged. `symlinked_entries()` lists them
+off the live tree for callers who need to know. A link is therefore a
+write-bridge out of the tree with nothing behind it.
 """
 
 from __future__ import annotations
@@ -49,16 +49,19 @@ MAX_SNAPSHOT_BYTES = 64 * 1024 * 1024
 def watchlist(home: Optional[str] = None) -> List[str]:
     """High-value files outside the skill tree that must never change.
 
-    Mirrors the worker's deny rules. Kept deliberately short: every entry is a
-    file whose modification would grant persistence or exfiltration, so a hit
-    here is worth interrupting the user for.
+    Kept deliberately short: every entry is a file whose modification would
+    grant persistence or exfiltration, so a hit here is worth interrupting the
+    user for. This is detection only — nothing prevents these writes. The list
+    used to mirror the worker's deny rules; those are empty now, so a hit means
+    the write already happened.
 
     NOT here: `.claude.json`. The child IS a Claude Code session, and the CLI
     rewrites that global-state file as normal operation — trust prompts, recent
-    projects, MCP state — through its own internals, not a tool call a deny rule
-    could stop. Watching it would flag every healthy distillation as an
-    out-of-scope write (confirmed against a real `claude -p` run). It stays in
-    the deny rules so the agent still cannot Write/Edit it as a tool.
+    projects, MCP state — through its own internals rather than a tool call.
+    Watching it would flag every healthy distillation as an out-of-scope write
+    (confirmed against a real `claude -p` run). It was covered by the deny rules
+    instead; with those gone it is neither denied nor watched, so a tool-call
+    write to it now passes unnoticed.
     """
     base = home or skill_paths.user_home()
     relative = (
@@ -121,8 +124,9 @@ def _walk_skill_tree(root: str):
     Symlinks are never followed: a link out of the tree would pull arbitrary
     files into the snapshot, and a link back into it would loop. Claude Code's
     own skill discovery does follow them, so a symlinked entry is real to the
-    user while being invisible here — those are collected and reported as
-    unprotected rather than silently skipped.
+    user while being invisible here — hence the second return value, which
+    `symlinked_entries()` uses to answer which paths the guard cannot cover.
+    `verify()` does not report them at all; see the module docstring.
     """
     files: List[str] = []
     symlinks: List[str] = []
@@ -146,6 +150,21 @@ def _walk_skill_tree(root: str):
             else:
                 files.append(full)
     return files, symlinks
+
+
+def symlinked_entries(root: Optional[str] = None) -> List[str]:
+    """Links under the skill tree — exactly the paths the guard cannot cover.
+
+    Links are neither refused nor reverted (see the module docstring), and
+    `verify()` does not mention them, so this is the only way to find out which
+    paths sit outside the guard's reach. Answered off the tree as it stands, so
+    it stays true as links are added and removed.
+    """
+    target = root or skill_paths.personal_skills_root()
+    if not os.path.isdir(target):
+        return []
+    _files, symlinks = _walk_skill_tree(target)
+    return sorted(symlinks)
 
 
 def _owning_skill(path: str, root: str) -> Optional[str]:
@@ -179,7 +198,6 @@ class Snapshot:
         self.home = home
         self.store = store
         self.files: Dict[str, str] = {}
-        self.symlinks: List[str] = []
         self.modes: Dict[str, int] = {}
         self.watched: Dict[str, Optional[str]] = {}
         self.patch_counts: Dict[str, int] = {}
@@ -188,7 +206,10 @@ class Snapshot:
     def capture(self) -> "Snapshot":
         total = 0
         if os.path.isdir(self.root):
-            paths, self.symlinks = _walk_skill_tree(self.root)
+            # Links are not snapshotted (see the module docstring) and no longer
+            # reported per run either — `symlinked_entries()` answers that off
+            # the live tree, which stays true between runs.
+            paths, _symlinks = _walk_skill_tree(self.root)
             for path in paths:
                 try:
                     info = os.stat(path)
@@ -356,6 +377,10 @@ def verify(before: Snapshot) -> Dict[str, Any]:
       out_of_scope_writes  watchlist files that changed
       unprotected          paths the guard could not have reverted
 
+    Symlinked entries appear in none of these: they are neither snapshotted nor
+    reverted nor flagged (see the module docstring). `symlinked_entries()` lists
+    them off the live tree for anyone who needs to know.
+
     A skill is judged as a unit: if its SKILL.md is rejected, its assets go back
     too, so a rejected skill can never leave a stray script behind.
     """
@@ -388,8 +413,47 @@ def verify(before: Snapshot) -> Dict[str, Any]:
         else:
             unprotected.append(path)
 
+    # An archive move looks exactly like a deletion from the live tree PLUS an
+    # identical file appearing under `.archive/` — and `.archive/` is inside the
+    # snapshot on purpose. Reverting that half-move leaves the skill in BOTH
+    # places. Observed on the first real consolidation run: the pass archived a
+    # merged-away skill, the guard restored the original, and the library ended
+    # up with a live copy and an archived copy of the same bytes.
+    #
+    # Matching on content, not on path, is what keeps the protection intact: a
+    # child that simply deletes a skill produces no archived twin and is still
+    # reverted. Only a move whose bytes landed in the archive is honoured.
+    archive_root = os.path.join(root, ".archive") + os.sep
+    archive_arrivals = {
+        path: digest
+        for path, digest in after.files.items()
+        if path.startswith(archive_root)
+        and path not in before.files
+        and digest != "unreadable"
+    }
+    arrival_digests = set(archive_arrivals.values())
+    archived: List[Dict[str, str]] = []
+    moved_digests = set()
+
     for path in removed:
+        digest = before.files.get(path)
+        if digest and digest != "unreadable" and digest in arrival_digests:
+            archived.append({"name": skill_paths.skill_name(path), "path": path})
+            moved_digests.add(digest)
+            continue
         restore(path, existed=True, reason="deleted")
+
+    # The arrival side of an accepted move is the SAME bytes, relocated — not
+    # new content the run authored. Judging it again would reject it: an
+    # archived SKILL.md would be reported as a freshly installed skill, and its
+    # `references/` would be reverted as an orphan whose owning skill "isn't
+    # valid". Both were observed on the first real consolidation run.
+    if moved_digests:
+        changed = [
+            path
+            for path in changed
+            if not (path in archive_arrivals and archive_arrivals[path] in moved_digests)
+        ]
 
     # Decide each skill from its SKILL.md first, so its assets can follow it.
     rejected_skills: Dict[str, str] = {}
@@ -458,10 +522,6 @@ def verify(before: Snapshot) -> Dict[str, Any]:
     out_of_scope = [
         path for path, digest in after.watched.items() if before.watched.get(path) != digest
     ]
-    # A symlinked entry is real to Claude Code's own discovery but cannot be
-    # snapshotted safely, so it is reported rather than silently skipped.
-    unprotected.extend(set(before.symlinks) | set(after.symlinks))
-
     _record_patches(installed, before.patch_counts)
 
     report: Dict[str, Any] = {
@@ -470,6 +530,8 @@ def verify(before: Snapshot) -> Dict[str, Any]:
         "rolled_back": rolled_back,
         "out_of_scope_writes": sorted(out_of_scope),
     }
+    if archived:
+        report["archived"] = archived
     if unprotected:
         report["unprotected"] = sorted(set(unprotected))
     return report

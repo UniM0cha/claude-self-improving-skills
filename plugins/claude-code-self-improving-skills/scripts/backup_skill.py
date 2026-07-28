@@ -20,6 +20,7 @@ import os
 import shutil
 import sys
 
+import runtime_env
 import sis_io
 # Plain import: Python puts a script's own directory on sys.path[0], and the
 # test suite adds scripts/ explicitly, so no path bootstrap is needed here.
@@ -33,6 +34,11 @@ sis_io.pin_utf8_stdio()
 
 
 def main():
+    # The cowork variant backs the same file up inside Cowork, into the same
+    # directory. Running both would just write the copy twice.
+    if runtime_env.is_cowork_runtime():
+        sys.exit(0)
+
     try:
         payload = json.loads(sys.stdin.read() or "{}")
     except Exception:

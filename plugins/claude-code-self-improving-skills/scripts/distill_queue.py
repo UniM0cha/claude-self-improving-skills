@@ -625,14 +625,6 @@ class DistillQueue:
                 jobs.append(job)
         return jobs
 
-    def count_created_since(self, since: float) -> int:
-        """Jobs created after `since` — backs the daily spawn cap."""
-        with self._connect() as conn:
-            row = conn.execute(
-                "SELECT COUNT(*) AS n FROM distill_jobs WHERE created_at >= ?", (float(since),)
-            ).fetchone()
-        return int(row["n"]) if row is not None else 0
-
     def acquire_worker_lease(
         self,
         owner: str,

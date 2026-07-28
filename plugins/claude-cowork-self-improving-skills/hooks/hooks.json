@@ -1,5 +1,5 @@
 {
-  "description": "Cowork 자기개선 루프: 첫 프롬프트에서 세션 안내 주입(UserPromptSubmit — 콜드 컨테이너의 SessionStart×플러그인 동기화 race 회피) + 복잡한 구간 종료 시 증류·저장 유도(Stop) + 학습 스킬 백업/검증(PreToolUse/PostToolUse)",
+  "description": "Cowork 자기개선 루프: 첫 프롬프트에서 세션 안내 주입(UserPromptSubmit — 콜드 컨테이너의 SessionStart×플러그인 동기화 race 회피) + 복잡한 구간 종료 시 증류·저장 유도(Stop) + 학습 스킬 백업/검증(PreToolUse/PostToolUse). 스크립트 이름의 -cowork 접미사는 필수: ${CLAUDE_PLUGIN_ROOT}는 실행 시점에야 치환되므로, 이름이 같으면 claude-code 변형의 훅과 등록 문자열이 완전히 일치해 한쪽만 살아남는다.",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/distill-nudge.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/distill-nudge-cowork.sh\"",
             "timeout": 15
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/backup-skill.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/backup-skill-cowork.sh\"",
             "timeout": 10
           }
         ]
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/validate-skill.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/validate-skill-cowork.sh\"",
             "timeout": 10
           }
         ]

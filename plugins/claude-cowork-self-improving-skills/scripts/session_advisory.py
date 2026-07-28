@@ -28,6 +28,9 @@ import os
 import sys
 from typing import NoReturn
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runtime_env
+
 SKILLS_DIR = os.path.expanduser("~/.claude/skills")
 STATE_DIR = os.path.expanduser("~/.claude/self-improve")
 ADVISORY_FLAG = os.path.join(STATE_DIR, "advisory_shown")
@@ -87,6 +90,12 @@ def _mark_shown():
 
 
 def main():
+    # A local session gets the claude-code variant's SessionStart notice
+    # instead; announcing the Cowork loop there would describe a save flow the
+    # user never has to perform.
+    if runtime_env.is_local_runtime():
+        emit_context(None)
+
     try:
         sys.stdin.read()  # drain payload; we don't need its fields
     except Exception:

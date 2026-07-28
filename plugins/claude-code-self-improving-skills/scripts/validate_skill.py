@@ -32,6 +32,7 @@ import shutil
 import sys
 from typing import NoReturn
 
+import runtime_env
 import sis_io
 from skill_paths import backup_path, is_learned_skill, skill_name
 
@@ -272,6 +273,12 @@ def _record_patch(file_path, text, payload):
 
 
 def main():
+    # Inside Cowork the cowork validator runs instead — it adds the checks for
+    # names and descriptions claude.ai's "스킬 저장" rejects, which only matter
+    # where a skill has to travel through the account to survive.
+    if runtime_env.is_cowork_runtime():
+        silent()
+
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}

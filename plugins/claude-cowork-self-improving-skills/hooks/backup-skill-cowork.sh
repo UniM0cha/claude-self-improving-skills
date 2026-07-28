@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse hook (Write|Edit|MultiEdit) — back up a learned SKILL.md before edit
-# so validate-skill.sh can roll back a structure-breaking change. Silent; never
+# so validate-skill-cowork.sh can roll back a structure-breaking change. Silent; never
 # blocks the edit (fail-safe).
 set -uo pipefail
 

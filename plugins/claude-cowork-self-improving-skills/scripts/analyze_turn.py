@@ -56,6 +56,8 @@ import sys
 from typing import NoReturn
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runtime_env
+
 try:
     import usage_store
 except Exception:
@@ -268,6 +270,15 @@ def _advisory_fallback():
 
 
 def main():
+    # Exactly one self-improving-skills variant may act per session. This one
+    # owns Cowork, where the session home is thrown away and a learned skill
+    # only survives by going through claude.ai. On a local machine the
+    # claude-code variant handles the same events and writes straight to disk,
+    # so staying silent here is what keeps the user from being told to press
+    # "스킬 저장" for a skill that is already persisted.
+    if runtime_env.is_local_runtime():
+        approve()
+
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}
